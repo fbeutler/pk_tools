@@ -85,7 +85,7 @@ def read_power(filename, combine_bins=10):
 		for ell in range(0,5):
 			output['pk%d' % ell] = np.ma.average(np.array(pks[ell]).reshape(-1, combine_bins), axis=1, weights=modes)
 			output['sig%d' % ell] = np.ma.average(np.array(sigs[ell]).reshape(-1, combine_bins), axis=1, weights=modes)
-		output['Nmodes'] = np.ma.average(modes, axis=1)
+		output['Nmodes'] = np.ma.sum(modes, axis=1).astype(int)
 		# Store the bin size
 		output['delta_k'] = output['k_center'][-1] - output['k_center'][-2]
 		return output
