@@ -1,5 +1,5 @@
 '''
-Module to read the matrises and power spectra provided by Beutler et al. (arxiv:X)
+Module to read the matrices and power spectra provided by Beutler et al. (arxiv:X)
 '''
 import numpy as np
 import os 
