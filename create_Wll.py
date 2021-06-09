@@ -49,12 +49,6 @@ def create_W(kbins, s_win, window, outpath=''):
 
 	for n in range(0, 3): 			 # n = 0,1,2 
 		for ell in range(0, 5): 	 # ell = 0,1,2,3,4 
-			# calculate (-i)^ell
-			if ell == 1 or ell == 2:
-				iell = -1.
-			else:
-				iell = 1.
-
 			for ellp in range(0, 5): # ell' = 0,1,2,3,4
 
 				print("n = %d, ell = %d, ell' = %d" % (n, ell, ellp))
@@ -63,7 +57,7 @@ def create_W(kbins, s_win, window, outpath=''):
 					IntegrandPi = np.zeros(Nfft)
 					for L in range(0, 5): # L = 0,1,2,3,4 : Q_L
 
-						interp_QL = interp1d(s_win, window[n][L], kind='linear', fill_value="extrapolate", bounds_error=False)
+						interp_QL = interp1d(s_win, window[n][L], kind='linear', fill_value=(1. if L == 0 else 0.,0.), bounds_error=False)
 
 						if n == 0 or n == 2:
 							IntegrandPi += C0_n02[ell][ellp][L]*interp_QL(slog)*sp.spherical_jn(ell,slog*k) 
@@ -75,13 +69,14 @@ def create_W(kbins, s_win, window, outpath=''):
 						prefactor = -1.
 					else:
 						prefactor = 1.
+					prefactor *= (-1. if ell == 1 or ell == 2 else 1.)
 
 					if ellp%2 == 0:
 						prefactor *= 1.
 					else:
 						prefactor *= -1.
 
-					W[ik] = prefactor*(2./np.pi)*iell*Pi.imag/(4.*np.pi)
+					W[ik] = prefactor*(2./np.pi)*(Pi.real if ellp%2 == 0 else Pi.imag)/(4.*np.pi)
 
 				# Write to file W_{ell,ell'} /////////////////////////
 				filename = "%s/W%d%d%d_%d_%d.dat" % (outpath, n, ell, ellp, Nfft, Nk)
