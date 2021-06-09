@@ -1,0 +1,106 @@
+import os, sys
+import numpy as np
+
+from scipy.interpolate import interp1d
+from scipy import special as sp
+
+from hankl import P2xi, xi2P
+
+
+def create_W(kbins, s_win, window, outpath=''):
+	'''
+	INPUT
+	kbins: Array of k-bins, 
+	-> k' bins are automatically determined (see Nfft below)
+	s_win: binning of the config-space window Q_ell(s)
+	window: config-space window Q_ell(s)
+
+	OUTPUT 
+	Window function W_{ell,ell'}(k,k') as given in eq. 2.5 of arxiv:XXX
+	-> This window function needs to be averaged to the observational
+	and theoretical bins as shown in eq. 2.16 (also see appendix E)
+	'''
+	smin = min(s_win)
+	smax = max(s_win)
+	Nfft = 1024*16
+	Nk = len(kbins)
+	print("Calculate window function of size %d x %d" % (Nk, Nfft))
+	ds = np.log(smax/smin)/float(Nfft)
+	slog = np.array([smin*np.exp(i*ds) for i in range(0, Nfft)])
+
+	C0_n02 = [
+		[ [1., 0., 0., 0., 0.], [0., 0., 0., 0., 0.], [0., 0., 1./5., 0., 0.], [0., 0., 0., 0., 0.], [0., 0., 0., 0., 1./9.] ],
+		[ [0., 1., 0., 0., 0.], [0., 0., 0., 0., 0.], [0., 2./5., 0., 9./35., 0.], [0., 0., 0., 0., 0.], [0., 0., 0., 4./21., 0.] ],
+		[ [0., 0., 1., 0., 0.], [0., 0., 0., 0., 0.], [1., 0., 2./7., 0., 2./7.], [0., 0., 0., 0., 0.], [0., 0., 2./7., 0., 100./693.] ],
+		[ [0., 0., 0., 1., 0.], [0., 0., 0., 0., 0.], [0., 3./5., 0., 4./15., 0.], [0., 0., 0., 0., 0.], [0., 4./9., 0., 2./11., 0.] ],
+		[ [0., 0., 0., 0., 1.], [0., 0., 0., 0., 0.], [0., 0., 18./35., 0., 20./77.], [0., 0., 0., 0., 0.], [1., 0., 20./77., 0., 162./1001.] ] ];
+
+	C0_n1 = [
+		[ [0., 0., 0., 0., 0.], [0., 1./3., 0., 0., 0.], [0., 0., 0., 0., 0.], [0., 0., 0., 1./7., 0.], [0., 0., 0., 0., 0.] ],
+		[ [0., 0., 0., 0., 0.], [1., 0., 2./5., 0., 0.], [0., 0., 0., 0., 0.], [0., 0., 9./35., 0., 4./21.], [0., 0., 0., 0., 0.] ],
+		[ [0., 0., 0., 0., 0.], [0., 2./3., 0., 3./7., 0.], [0., 0., 0., 0., 0.], [0., 3./7., 0., 4./21., 0.], [0., 0., 0., 0., 0.] ],
+		[ [0., 0., 0., 0., 0.], [0., 0., 3./5., 0., 4./9.], [0., 0., 0., 0., 0.], [1., 0., 4./15., 0., 2./11.], [0., 0., 0., 0., 0.] ],
+		[ [0., 0., 0., 0., 0.], [0., 0., 0., 4./7., 0.], [0., 0., 0., 0., 0.], [0., 4./7., 0., 18./77., 0.], [0., 0., 0., 0., 0.] ] ];
+
+	###############################################
+	# Compute W_{\ell,\ell'} in Fourier space
+	###############################################
+	W = np.zeros((Nk, Nfft))
+
+	for n in range(0, 3): 			 # n = 0,1,2 
+		for ell in range(0, 5): 	 # ell = 0,1,2,3,4 
+			# calculate (-i)^ell
+			if ell == 1 or ell == 2:
+				iell = -1.
+			else:
+				iell = 1.
+
+			for ellp in range(0, 5): # ell' = 0,1,2,3,4
+
+				print("n = %d, ell = %d, ell' = %d" % (n, ell, ellp))
+				for ik, k in enumerate(kbins):
+
+					IntegrandPi = np.zeros(Nfft)
+					for L in range(0, 5): # L = 0,1,2,3,4 : Q_L
+
+						interp_QL = interp1d(s_win, window[n][L], kind='linear', fill_value="extrapolate", bounds_error=False)
+
+						if n == 0 or n == 2:
+							IntegrandPi += C0_n02[ell][ellp][L]*interp_QL(slog)*sp.spherical_jn(ell,slog*k) 
+						else:
+							IntegrandPi += C0_n1[ell][ellp][L]*interp_QL(slog)*sp.spherical_jn(ell,slog*k) 
+					kp, Pi = xi2P(slog, IntegrandPi, l=ellp, n=0)
+
+					if ell%2 == 1:
+						prefactor = -1.
+					else:
+						prefactor = 1.
+
+					if ellp%2 == 0:
+						prefactor *= 1.
+					else:
+						prefactor *= -1.
+
+					W[ik] = prefactor*(2./np.pi)*iell*Pi.imag/(4.*np.pi)
+
+				# Write to file W_{ell,ell'} /////////////////////////
+				filename = "%s/W%d%d%d_%d_%d.dat" % (outpath, n, ell, ellp, Nfft, Nk)
+				with open(filename, 'w') as f:
+					for ikp in range(0, Nfft):
+						for ik in range(0, Nk):
+							f.write("%0.16f " % W[ik][ikp])
+						f.write("\n")
+
+	filename = "%s/kp_%d_%d.dat" % (outpath, Nfft, Nk)
+	with open(filename, 'w') as f:
+		for ikp in range(0, Nfft):
+			f.write("%0.16f\n" % kp[ikp])
+
+	filename = "%s/k_%d_%d.dat" % (outpath, Nfft, Nk)
+	with open(filename, 'w') as f:
+		for ik in range(0, Nk):
+			if isinstance(kbins[ik], float):
+				f.write("%0.16f\n" % kbins[ik])
+			else:
+				f.write("%0.16f\n" % 0.)
+	return W
