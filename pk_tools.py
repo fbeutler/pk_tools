@@ -18,7 +18,7 @@ def dict_to_vec(pk_input, use_ell=[0,1,2,3,4]):
 def read_power(filename, combine_bins=10):
 	'''
 	Read power spectrum files provided as part of 
-	Beutler et al. (arxiv:X)
+	Beutler et al. (arxiv:2106.06324)
 
 	Input:
 	filename: location of power spectrum file
