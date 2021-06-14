@@ -16,7 +16,7 @@ def create_W(kbins, s_win, window, outpath=''):
 	window: config-space window Q_ell(s)
 
 	OUTPUT 
-	Window function W_{ell,ell'}(k,k') as given in eq. 2.5 of arxiv:XXX
+	Window function W_{ell,ell'}(k,k') as given in eq. 2.5 of arxiv:2106.06324
 	-> This window function needs to be averaged to the observational
 	and theoretical k-bins as shown in eq. 2.16 (also see appendix E)
 	'''
