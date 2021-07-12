@@ -19,7 +19,7 @@ def get_end_point_LOS_M(d, Nkth=400, kmin=0., kmax=0.4):
 	M = np.zeros((Nkth*5, Nkth*3))
 
 	dkp_th = (kmax-kmin)/Nkth
-	kp_th = np.array([i*dkp_th + dkp_th/2. for i in range(0,Nkth)])
+	kp_th = np.array([kmin + i*dkp_th + dkp_th/2. for i in range(0,Nkth)])
 
 	K1 = (3./(5.*d))*( (3./kp_th)*np.ones(Nkth) )
 	K2 = (1./d)*(3./5.)*( (2./kp_th)*np.ones(Nkth) )
