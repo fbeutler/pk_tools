@@ -27,9 +27,9 @@ def get_end_point_LOS_M(d, Nkth=400, kmin=0., kmax=0.4):
 
 	# Now we add the K matrices, which however have off-diagonal elements
 	# We start with the diagonal elements
-	M[Nkth:2*Nkth, Nkth:2*Nkth] = (3./(5.*d))*( (3./kp_th)*np.identity(Nkth) )
-	M[3*Nkth:4*Nkth, Nkth:2*Nkth] = (3./(5.*d))*( (2./kp_th)*np.identity(Nkth) )
-	M[3*Nkth:4*Nkth, 2*Nkth:3*Nkth] = (10./(9.*d))*( (5./kp_th)*np.identity(Nkth) )
+	M[Nkth:2*Nkth, Nkth:2*Nkth] = (3./(5.*d))*( 3.*np.identity(Nkth) )
+	M[3*Nkth:4*Nkth, Nkth:2*Nkth] = (3./(5.*d))*( 2.*np.identity(Nkth) )
+	M[3*Nkth:4*Nkth, 2*Nkth:3*Nkth] = (10./(9.*d))*( 5.*np.identity(Nkth) )
 
 	# Now we add the (forward) derivative
 	for ik, k in enumerate(kp_th):
