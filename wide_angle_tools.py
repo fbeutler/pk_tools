@@ -56,12 +56,12 @@ def _populate_derivative(d, M, index1, index2, ik, pre_factor, kp_th):
 		norm = delta_k
 
 	if ik > 0:
-		M[index1, index2-1] = -pre_factor*kp_th/(d*norm)
+		M[index1, index2-1] = -pre_factor*kp_th[ik]/(d*norm)
 	else:
-		M[index1, index2] += -pre_factor*kp_th/(d*norm)
+		M[index1, index2] += -pre_factor*kp_th[ik]/(d*norm)
 
 	if ik < len(kp_th)-1:
-		M[index1, index2+1] = pre_factor*kp_th/(d*norm)
+		M[index1, index2+1] = pre_factor*kp_th[ik]/(d*norm)
 	else:
-		M[index1, index2] += pre_factor*kp_th/(d*norm)
+		M[index1, index2] += pre_factor*kp_th[ik]/(d*norm)
 	return M
